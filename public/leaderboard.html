@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - JEE Study</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+    <div class="ambient-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+    
+    <div id="wakeup-banner" class="wakeup-banner"><div class="spinner"></div><span>Waking up server...</span></div>
+
+    <nav>
+        <div class="nav-logo">🎓 JEE <span>Study</span></div>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/leaderboard" class="active">Leaderboard</a>
+            <a href="/profile">Profile</a>
+        </div>
+        <button onclick="window.location.href='/'" class="nav-logout">Logout</button>
+    </nav>
+
+    <div class="page-content" style="max-width:800px">
+        <h1 style="text-align:center; margin-bottom:24px">🏆 Leaderboard</h1>
+        
+        <div style="display:flex; justify-content:center; gap:10px; margin-bottom:24px">
+            <button class="btn tab active" onclick="switchTab('weekly')">This Week</button>
+            <button class="btn tab" onclick="switchTab('monthly')">This Month</button>
+            <button class="btn tab" onclick="switchTab('alltime')">All Time</button>
+        </div>
+
+        <div id="lb-list" class="leaderboard-list">
+            <div class="spinner" style="margin:20px auto"></div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

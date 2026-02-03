@@ -1,0 +1,67 @@
+/* --- Dashboard Grid --- */
+.page-content { position: relative; z-index: 1; padding: 20px; max-width: 1200px; margin: 0 auto; }
+.dashboard-grid { display: grid; grid-template-columns: 420px 1fr; gap: 24px; }
+
+@media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+/* --- Task Panel --- */
+.tasks-panel { display: flex; flex-direction: column; gap: 16px; }
+.task-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; position: relative; }
+.task-header { display: flex; justify-content: space-between; font-size: 12px; }
+.task-name { font-size: 15px; font-weight: 600; }
+.task-meta { color: var(--text-secondary); font-size: 13px; }
+.task-actions { margin-top: 8px; display: flex; gap: 10px; }
+
+/* --- Active Timer --- */
+.active-task-card { background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 20px; }
+.active-task-label { font-size: 11px; letter-spacing: 1px; color: var(--accent-blue); text-transform: uppercase; margin-bottom: 8px; }
+.circular-progress { width: 120px; height: 120px; margin: 16px auto; position: relative; }
+.circular-progress svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.progress-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 8; }
+.progress-fill { fill: none; stroke: var(--accent-blue); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+.timer-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; }
+.timer-text .elapsed { font-size: 18px; font-weight: 700; }
+.timer-text .estimated { font-size: 12px; color: var(--text-muted); }
+.timer-controls { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
+
+/* --- Friend Circles --- */
+.friends-section { margin-bottom: 24px; }
+.friends-row { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 10px; }
+.friend-circle-wrapper { display: flex; flex-direction: column; align-items: center; cursor: pointer; min-width: 100px; }
+.friend-circle { width: 100px; height: 100px; position: relative; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); transition: 0.3s; }
+.friend-circle svg { width: 100%; height: 100%; position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+.circle-inner { position: relative; z-index: 2; text-align: center; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.circle-name { margin-top: 8px; font-size: 13px; font-weight: 500; }
+.circle-status-dot { width: 8px; height: 8px; border-radius: 50%; background: #333; margin-top: 4px; }
+.circle-status-dot.active { background: var(--success-green); box-shadow: 0 0 8px var(--success-green); }
+
+/* --- Friend Todo Panel --- */
+.friend-todo-panel { background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; margin-top: 12px; overflow: hidden; max-height: 0; opacity: 0; transition: 0.3s; }
+.friend-todo-panel.open { max-height: 500px; opacity: 1; padding: 20px; margin-bottom: 24px; }
+.panel-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+.friend-task-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+.ftask-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* --- Profile & Leaderboard --- */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.08); }
+.stat-value { font-size: 24px; font-weight: 700; color: var(--accent-blue); margin-bottom: 4px; }
+.stat-label { font-size: 12px; color: var(--text-secondary); }
+
+.leaderboard-list { display: flex; flex-direction: column; gap: 12px; }
+.leaderboard-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); }
+.leaderboard-card.rank-1 { border-color: rgba(255, 215, 0, 0.4); background: rgba(255, 215, 0, 0.05); }
+.rank-number { font-size: 20px; font-weight: 800; width: 40px; text-align: center; }
+.lb-stats { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+/* --- Forms --- */
+.login-container { max-width: 400px; margin: 80px auto; text-align: center; position: relative; z-index: 2; }
+.task-entry-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+.star-rating { font-size: 32px; color: rgba(255,255,255,0.2); cursor: pointer; text-align: center; margin: 10px 0; }
+.star-rating .star.filled { color: var(--warning-orange); }
+
+@media (max-width: 600px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .task-entry-row { flex-wrap: wrap; }
+    .leaderboard-card { flex-direction: column; text-align: center; }
+}

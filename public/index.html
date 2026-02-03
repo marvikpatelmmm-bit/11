@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEE Study - Login</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .auth-card { max-width: 400px; margin: 10vh auto; position: relative; z-index: 2; text-align: center; }
+        .logo { font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
+        .logo span { color: var(--accent-blue); }
+        .subtitle { color: var(--text-secondary); margin-bottom: 24px; }
+        form { display: flex; flex-direction: column; gap: 16px; }
+        .switch-link { margin-top: 16px; font-size: 13px; color: var(--text-muted); cursor: pointer; }
+        .switch-link:hover { color: var(--text-primary); }
+    </style>
+</head>
+<body>
+    <div class="ambient-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <!-- Wakeup Banner -->
+    <div id="wakeup-banner" class="wakeup-banner">
+        <div class="spinner"></div>
+        <span>Waking up server... please wait a moment.</span>
+    </div>
+
+    <div class="auth-card glass">
+        <div class="logo">🎓 JEE <span>Study</span></div>
+        <div class="subtitle">Track. Compete. Conquer.</div>
+
+        <!-- Login Form -->
+        <form id="login-form" onsubmit="handleLogin(event)">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit" class="btn btn-primary">Login</button>
+            <div class="switch-link" onclick="toggleAuth('register')">Don't have an account? Register</div>
+        </form>
+
+        <!-- Register Form -->
+        <form id="register-form" onsubmit="handleRegister(event)" style="display:none;">
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="text" name="username" placeholder="Username (3+ chars)" required pattern="[a-zA-Z0-9_]{3,20}">
+            <input type="password" name="password" placeholder="Password (6+ chars)" required minlength="6">
+            <button type="submit" class="btn btn-success">Create Account</button>
+            <div class="switch-link" onclick="toggleAuth('login')">Already have an account? Login</div>
+        </form>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

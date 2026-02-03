@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - JEE Study</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+    <div class="ambient-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+    
+    <div id="wakeup-banner" class="wakeup-banner">
+        <div class="spinner"></div><span>Waking up server...</span>
+    </div>
+
+    <nav>
+        <div class="nav-logo">🎓 JEE <span>Study</span></div>
+        <div class="nav-links">
+            <a href="/dashboard" class="active">Dashboard</a>
+            <a href="/leaderboard">Leaderboard</a>
+            <a href="/profile">Profile</a>
+        </div>
+        <button id="logout-btn" class="nav-logout">Logout</button>
+    </nav>
+
+    <div class="page-content">
+        <!-- Day Ended Banner -->
+        <div id="day-ended-banner" class="glass" style="display:none; margin-bottom:20px; color:var(--success-green); align-items:center; gap:10px">
+            <span>✅ Your day has ended. Good job! Check Profile for summary.</span>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Left: Tasks -->
+            <div class="tasks-panel">
+                <div id="active-task-container"></div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center">
+                    <h2>Today's Plan</h2>
+                    <button id="plan-btn" class="btn btn-sm" onclick="openPlanModal()">+ Add Tasks</button>
+                </div>
+                
+                <div id="tasks-list" style="display:flex; flex-direction:column; gap:12px;">
+                    <!-- Tasks injected here -->
+                    <div class="spinner" style="margin:20px auto"></div>
+                </div>
+
+                <button id="end-btn" class="btn btn-primary" style="margin-top:20px" onclick="openEndDayModal()">End My Day</button>
+            </div>
+
+            <!-- Right: Friends & Stats -->
+            <div class="right-column">
+                <div class="friends-section">
+                    <h3 style="margin-bottom:12px">Friends Online</h3>
+                    <div id="friends-container" class="friends-row">
+                        <!-- Friends injected here -->
+                    </div>
+                    
+                    <!-- Sliding Panel -->
+                    <div id="friend-todo-panel" class="friend-todo-panel">
+                        <div class="panel-header">
+                            <h3 id="fp-name" style="font-size:14px">User's Tasks</h3>
+                            <button class="btn-close" onclick="closeFriendPanel()">×</button>
+                        </div>
+                        <div id="fp-list"></div>
+                    </div>
+                </div>
+
+                <div class="glass">
+                    <h3 style="margin-bottom:12px">Group Stats (Today)</h3>
+                    <div id="mini-leaderboard"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Title</h2>
+                <button class="btn-close" onclick="utils.closeModal()">×</button>
+            </div>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
