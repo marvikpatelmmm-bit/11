@@ -40,6 +40,11 @@ body { background: var(--bg-page); color: var(--text-primary); min-height: 100vh
 }
 .card:hover { background: var(--glass-bg-hover); border-color: var(--glass-border-hover); transform: translateY(-3px); }
 
+/* --- Text Helpers --- */
+.text-success { color: var(--success-green); }
+.text-warning { color: var(--warning-orange); }
+.text-muted { color: var(--text-muted); }
+
 /* --- Buttons --- */
 .btn {
     background: rgba(255, 255, 255, 0.07); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.12);
@@ -53,6 +58,8 @@ body { background: var(--bg-page); color: var(--text-primary); min-height: 100vh
 .btn-success:hover { background: rgba(16, 185, 129, 0.25); border-color: rgba(16, 185, 129, 0.55); }
 .btn-danger { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.35); color: #ef4444; }
 .btn-danger:hover { background: rgba(239, 68, 68, 0.25); border-color: rgba(239, 68, 68, 0.55); }
+.btn-warning { background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.35); color: #f59e0b; }
+.btn-warning:hover { background: rgba(245, 158, 11, 0.25); border-color: rgba(245, 158, 11, 0.55); }
 
 /* --- Inputs --- */
 input, textarea, select {

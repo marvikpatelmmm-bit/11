@@ -37,6 +37,7 @@ db.exec(`
         completed_at TEXT,
         task_date TEXT NOT NULL,
         created_at TEXT DEFAULT (datetime('now')),
+        accumulated_seconds INTEGER DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users(id)
     );
     CREATE TABLE IF NOT EXISTS daily_summaries (
@@ -65,6 +66,13 @@ db.exec(`
         FOREIGN KEY (user_id) REFERENCES users(id)
     );
 `);
+
+// Migration for existing databases
+try {
+    db.prepare('ALTER TABLE tasks ADD COLUMN accumulated_seconds INTEGER DEFAULT 0').run();
+} catch (e) {
+    // Column likely exists, ignore
+}
 
 // --- Middleware ---
 app.use(compression());
@@ -243,7 +251,7 @@ app.post('/api/tasks/batch-add', requireAuth, (req, res) => {
     }
 });
 
-// --- Start Task ---
+// --- Start/Resume Task ---
 app.post('/api/tasks/:id/start', requireAuth, (req, res) => {
     try {
         const taskId = parseInt(req.params.id);
@@ -251,18 +259,48 @@ app.post('/api/tasks/:id/start', requireAuth, (req, res) => {
 
         const task = db.prepare('SELECT * FROM tasks WHERE id = ? AND user_id = ?').get(taskId, userId);
         if (!task) return res.status(404).json({ error: 'Task not found' });
-        if (task.status !== 'pending') return res.status(400).json({ error: 'Task is not in pending status' });
+        if (!['pending', 'paused'].includes(task.status)) return res.status(400).json({ error: 'Task is not in pending or paused status' });
 
         const activeSession = db.prepare('SELECT * FROM active_sessions WHERE user_id = ?').get(userId);
         if (activeSession) return res.status(400).json({ error: 'You already have an active task.' });
 
         const now = new Date().toISOString();
+        // Keep existing accumulated_seconds if restarting from paused
         db.prepare('UPDATE tasks SET status = ?, started_at = ? WHERE id = ?').run('in_progress', now, taskId);
         db.prepare('INSERT OR REPLACE INTO active_sessions (user_id, active_task_id, started_at, last_seen) VALUES (?, ?, ?, ?)').run(userId, taskId, now, now);
 
         res.json({ success: true, task: { id: taskId, started_at: now } });
     } catch (err) {
         console.error('Start task error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// --- Pause Task ---
+app.post('/api/tasks/:id/pause', requireAuth, (req, res) => {
+    try {
+        const taskId = parseInt(req.params.id);
+        const userId = req.session.userId;
+
+        const task = db.prepare('SELECT * FROM tasks WHERE id = ? AND user_id = ?').get(taskId, userId);
+        if (!task) return res.status(404).json({ error: 'Task not found' });
+        if (task.status !== 'in_progress') return res.status(400).json({ error: 'Task is not in progress' });
+
+        const now = new Date();
+        const startedAt = new Date(task.started_at);
+        // Calculate diff in seconds
+        const diffSeconds = Math.floor((now - startedAt) / 1000);
+        // Add to previous accumulated time
+        const newAccumulated = (task.accumulated_seconds || 0) + diffSeconds;
+
+        db.prepare('UPDATE tasks SET status = ?, started_at = NULL, accumulated_seconds = ? WHERE id = ?')
+            .run('paused', newAccumulated, taskId);
+
+        db.prepare('DELETE FROM active_sessions WHERE user_id = ?').run(userId);
+
+        res.json({ success: true, accumulated_seconds: newAccumulated });
+    } catch (err) {
+        console.error('Pause task error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -275,15 +313,21 @@ app.post('/api/tasks/:id/complete', requireAuth, (req, res) => {
 
         const task = db.prepare('SELECT * FROM tasks WHERE id = ? AND user_id = ?').get(taskId, userId);
         if (!task) return res.status(404).json({ error: 'Task not found' });
-        if (task.status !== 'in_progress') return res.status(400).json({ error: 'Task is not in progress' });
+        if (!['in_progress', 'paused'].includes(task.status)) return res.status(400).json({ error: 'Task is not in progress or paused' });
 
-        const now = new Date().toISOString();
-        const startedAt = new Date(task.started_at);
-        const actualMinutes = Math.round((new Date(now) - startedAt) / 60000);
+        const now = new Date();
+        let totalSeconds = task.accumulated_seconds || 0;
+        
+        // If it was running, add the last session time
+        if (task.status === 'in_progress' && task.started_at) {
+            totalSeconds += Math.floor((now - new Date(task.started_at)) / 1000);
+        }
+
+        const actualMinutes = Math.round(totalSeconds / 60);
         const status = actualMinutes <= task.estimated_minutes ? 'completed_ontime' : 'completed_delayed';
 
         db.prepare('UPDATE tasks SET status = ?, completed_at = ?, actual_minutes = ? WHERE id = ?')
-            .run(status, now, actualMinutes, taskId);
+            .run(status, now.toISOString(), actualMinutes, taskId);
 
         db.prepare('DELETE FROM active_sessions WHERE user_id = ?').run(userId);
 
@@ -349,7 +393,7 @@ app.get('/api/feed/active', requireAuth, (req, res) => {
         const session = db.prepare('SELECT * FROM active_sessions WHERE user_id = ?').get(user.id);
         let activeTask = null;
         if (session) {
-            activeTask = db.prepare('SELECT id, task_name, subject, started_at, estimated_minutes FROM tasks WHERE id = ?').get(session.active_task_id);
+            activeTask = db.prepare('SELECT id, task_name, subject, started_at, estimated_minutes, accumulated_seconds FROM tasks WHERE id = ?').get(session.active_task_id);
         }
 
         const stats = db.prepare(`
@@ -475,7 +519,7 @@ app.post('/api/summary/end-day', requireAuth, (req, res) => {
         const rating = parseInt(self_rating);
         if (isNaN(rating) || rating < 1 || rating > 5) return res.status(400).json({ error: 'Self-rating must be 1-5' });
 
-        db.prepare("UPDATE tasks SET status = 'skipped' WHERE user_id = ? AND task_date = ? AND status IN ('pending', 'in_progress')")
+        db.prepare("UPDATE tasks SET status = 'skipped' WHERE user_id = ? AND task_date = ? AND status IN ('pending', 'in_progress', 'paused')")
             .run(userId, today);
 
         db.prepare('DELETE FROM active_sessions WHERE user_id = ?').run(userId);

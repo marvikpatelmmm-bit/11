@@ -128,6 +128,14 @@ function renderTaskRow(task, container) {
     if (task.status === 'completed_ontime') { statusIcon = '✅'; statusClass = 'text-success'; }
     else if (task.status === 'completed_delayed') { statusIcon = '⏰'; statusClass = 'text-warning'; }
     else if (task.status === 'skipped') { statusIcon = '❌'; statusClass = 'text-muted'; }
+    else if (task.status === 'paused') {
+        statusIcon = '⏸'; 
+        statusClass = 'text-warning';
+        actionBtns = `
+            <button class="btn btn-primary btn-sm" onclick="startTask(${task.id})">▶ Resume</button>
+            <button class="btn btn-sm" onclick="skipTask(${task.id})">Skip</button>
+        `;
+    }
     else {
         // Pending
         actionBtns = `
@@ -150,6 +158,7 @@ function renderTaskRow(task, container) {
 
 function renderActiveTask(task, container) {
     const startedAt = new Date(task.started_at).getTime();
+    const accumulated = task.accumulated_seconds || 0;
     const estSeconds = task.estimated_minutes * 60;
     
     container.innerHTML = `
@@ -168,6 +177,7 @@ function renderActiveTask(task, container) {
                 </div>
             </div>
             <div class="timer-controls">
+                <button class="btn btn-warning" onclick="pauseTask(${task.id})">⏸ Pause</button>
                 <button class="btn btn-success" onclick="completeTask(${task.id})">✓ Done</button>
                 <button class="btn btn-danger" onclick="skipTask(${task.id})">✗ Skip</button>
             </div>
@@ -178,29 +188,41 @@ function renderActiveTask(task, container) {
     const text = document.getElementById('timer-elapsed');
     const circumference = 339.29;
 
-    activeTimerInterval = setInterval(() => {
+    const updateTimer = () => {
         const now = Date.now();
-        const diffSec = Math.floor((now - startedAt) / 1000);
+        // Total time = current session time + previously accumulated time
+        const currentSessionSec = Math.floor((now - startedAt) / 1000);
+        const totalSec = currentSessionSec + accumulated;
         
-        const m = Math.floor(diffSec / 60).toString().padStart(2, '0');
-        const s = (diffSec % 60).toString().padStart(2, '0');
+        const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+        const s = (totalSec % 60).toString().padStart(2, '0');
         text.textContent = `${m}:${s}`;
 
-        const pct = Math.min(diffSec / estSeconds, 1);
+        const pct = Math.min(totalSec / estSeconds, 1);
         const offset = circumference * (1 - pct);
         circle.style.strokeDashoffset = offset;
         
-        if (diffSec > estSeconds) {
+        if (totalSec > estSeconds) {
             circle.style.stroke = 'var(--error-red)';
             text.style.color = 'var(--error-red)';
         }
-    }, 1000);
+    };
+    
+    updateTimer(); // Initial call
+    activeTimerInterval = setInterval(updateTimer, 1000);
 }
 
 // --- Task Actions ---
 window.startTask = async (id) => {
     try {
         await window.utils.apiFetch(`/api/tasks/${id}/start`, { method: 'POST' });
+        loadTasks();
+    } catch (e) { /* handled by fetch wrapper */ }
+};
+
+window.pauseTask = async (id) => {
+    try {
+        await window.utils.apiFetch(`/api/tasks/${id}/pause`, { method: 'POST' });
         loadTasks();
     } catch (e) { /* handled by fetch wrapper */ }
 };
@@ -348,9 +370,12 @@ async function pollFriends() {
         if (user.activeTask) {
             // Calculate active progress
             const started = new Date(user.activeTask.started_at).getTime();
+            const accumulated = user.activeTask.accumulated_seconds || 0;
             const estSec = user.activeTask.estimated_minutes * 60;
-            const elapSec = (Date.now() - started) / 1000;
-            const pct = Math.min(elapSec / estSec, 1.2); // Cap visually
+            const currentSessionSec = (Date.now() - started) / 1000;
+            const totalSec = currentSessionSec + accumulated;
+            
+            const pct = Math.min(totalSec / estSec, 1.2); // Cap visually
             strokeDashoffset = 263 * (1 - pct);
             
             // Map subject to color
@@ -359,7 +384,7 @@ async function pollFriends() {
 
             circleContent = `
                 <div class="circle-active-info">
-                    <div style="font-weight:700">${Math.floor(elapSec/60)}m</div>
+                    <div style="font-weight:700">${Math.floor(totalSec/60)}m</div>
                     <div class="subject-tag ${user.activeTask.subject.toLowerCase()}" style="font-size:9px; padding:2px 4px">${user.activeTask.subject.substr(0,3)}</div>
                 </div>
             `;
@@ -417,10 +442,11 @@ window.toggleFriendPanel = async (userId) => {
     list.innerHTML = '';
     
     data.tasks.forEach(task => {
-        let status = task.status === 'in_progress' ? '⏱ Active' : (task.status.includes('completed') ? '✅ Done' : (task.status==='skipped'?'❌':'⏳'));
+        let status = task.status === 'in_progress' ? '⏱ Active' : (task.status.includes('completed') ? '✅ Done' : (task.status==='skipped'?'❌': (task.status==='paused'?'⏸ Paused':'⏳')));
         if(task.status === 'in_progress') {
              const mins = Math.floor((Date.now() - new Date(task.started_at).getTime())/60000);
-             status = `⏱ ${mins}m`;
+             const accumulatedMins = Math.floor((task.accumulated_seconds || 0)/60);
+             status = `⏱ ${mins + accumulatedMins}m`;
         }
         
         list.innerHTML += `
