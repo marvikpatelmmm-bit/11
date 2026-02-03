@@ -60,6 +60,27 @@
 .star-rating { font-size: 32px; color: rgba(255,255,255,0.2); cursor: pointer; text-align: center; margin: 10px 0; }
 .star-rating .star.filled { color: var(--warning-orange); }
 
+/* --- Add Task Form Elements --- */
+.subject-options { display: flex; gap: 8px; flex-wrap: wrap; }
+.subject-option { cursor: pointer; position: relative; }
+.subject-option input { position: absolute; opacity: 0; width: 0; height: 0; }
+.subject-option {
+    padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: var(--text-secondary);
+    transition: all 0.2s;
+}
+.subject-option:hover { background: rgba(255,255,255,0.1); }
+.subject-option:has(input:checked) { border-color: transparent; color: #fff; }
+
+.subject-option.maths:has(input:checked) { background: var(--subject-maths); box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+.subject-option.physics:has(input:checked) { background: var(--subject-physics); box-shadow: 0 0 15px rgba(139, 92, 246, 0.4); }
+.subject-option.chemistry:has(input:checked) { background: var(--subject-chemistry); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+.subject-option.other:has(input:checked) { background: var(--subject-other); box-shadow: 0 0 15px rgba(107, 114, 128, 0.4); }
+
+.time-presets { display: flex; gap: 6px; }
+.btn-xs { background: rgba(255,255,255,0.1); border:none; padding: 4px 8px; border-radius: 4px; color: var(--text-secondary); cursor: pointer; font-size: 12px; }
+.btn-xs:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
 @media (max-width: 600px) {
     .stats-grid { grid-template-columns: 1fr 1fr; }
     .task-entry-row { flex-wrap: wrap; }

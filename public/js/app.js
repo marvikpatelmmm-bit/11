@@ -104,16 +104,16 @@ async function loadTasks() {
     });
 
     if (data.tasks.length === 0) {
-        container.innerHTML = `<div class="card" style="text-align:center; color:var(--text-muted)">No tasks yet. Plan your day!</div>`;
+        container.innerHTML = `<div class="card" style="text-align:center; color:var(--text-muted)">No tasks yet. Add a task to get started!</div>`;
     }
 
     // Update buttons
-    const planBtn = document.getElementById('plan-btn');
+    const addBtn = document.getElementById('add-task-btn');
     const endBtn = document.getElementById('end-btn');
     if (data.dayEnded) {
-        planBtn.disabled = true;
+        addBtn.disabled = true;
         endBtn.disabled = true;
-        planBtn.textContent = "Day Ended";
+        addBtn.textContent = "Day Ended";
         document.getElementById('day-ended-banner').style.display = 'flex';
     }
 }
@@ -190,7 +190,6 @@ function renderActiveTask(task, container) {
 
     const updateTimer = () => {
         const now = Date.now();
-        // Total time = current session time + previously accumulated time
         const currentSessionSec = Math.floor((now - startedAt) / 1000);
         const totalSec = currentSessionSec + accumulated;
         
@@ -237,60 +236,78 @@ window.skipTask = async (id) => {
     loadTasks();
 };
 
-// --- Planning Modal ---
-window.openPlanModal = () => {
+// --- Add Task Modal ---
+window.openAddTaskModal = () => {
     const body = document.getElementById('modal-body');
-    document.getElementById('modal-title').textContent = "Plan Your Day";
-    body.innerHTML = `
-        <div id="plan-rows"></div>
-        <button class="btn btn-sm" onclick="addPlanRow()" style="width:100%; margin-top:10px">+ Add Task</button>
-        <div style="margin-top:20px; display:flex; gap:10px">
-            <button class="btn btn-primary" style="flex:1" onclick="submitPlan()">Save Tasks</button>
-            <button class="btn" style="flex:1" onclick="utils.closeModal()">Cancel</button>
-        </div>
-    `;
-    addPlanRow(); // Add first row
-    window.utils.openModal();
-};
-
-window.addPlanRow = () => {
-    const container = document.getElementById('plan-rows');
-    const div = document.createElement('div');
-    div.className = 'task-entry-row';
-    div.innerHTML = `
-        <input type="text" placeholder="Task name" class="p-name" required>
-        <select class="p-subj" style="width:100px"><option>Maths</option><option>Physics</option><option>Chemistry</option><option>Other</option></select>
-        <select class="p-time" style="width:100px">
-            <option value="30">30m</option><option value="45">45m</option><option value="60">1h</option><option value="90">1.5h</option><option value="120">2h</option>
-        </select>
-        <button class="btn-close" style="font-size:18px" onclick="this.parentElement.remove()">×</button>
-    `;
-    container.appendChild(div);
-};
-
-window.submitPlan = async () => {
-    const rows = document.querySelectorAll('.task-entry-row');
-    const tasks = [];
-    rows.forEach(row => {
-        const name = row.querySelector('.p-name').value;
-        if(name) {
-            tasks.push({
-                task_name: name,
-                subject: row.querySelector('.p-subj').value,
-                estimated_minutes: parseInt(row.querySelector('.p-time').value)
-            });
-        }
-    });
+    document.getElementById('modal-title').textContent = "Add New Task";
     
-    if(tasks.length === 0) return window.utils.showToast('Add at least one task', 'error');
+    body.innerHTML = `
+        <form id="add-task-form" onsubmit="handleAddTaskSubmit(event)">
+            <div style="margin-bottom:16px">
+                <label>Subject</label>
+                <div class="subject-options">
+                    <label class="subject-option maths"><input type="radio" name="subject" value="Maths" checked>Maths</label>
+                    <label class="subject-option physics"><input type="radio" name="subject" value="Physics">Physics</label>
+                    <label class="subject-option chemistry"><input type="radio" name="subject" value="Chemistry">Chemistry</label>
+                    <label class="subject-option other"><input type="radio" name="subject" value="Other">Other</label>
+                </div>
+            </div>
+            
+            <div style="margin-bottom:16px">
+                <label>Task Name / Topic</label>
+                <input type="text" name="task_name" placeholder="e.g. Calculus Practice, Rotational Motion..." required autocomplete="off">
+            </div>
+            
+            <div style="margin-bottom:24px">
+                <label>Estimated Time (minutes)</label>
+                <div style="display:flex; gap:10px; align-items:center">
+                    <input type="number" name="estimated_minutes" value="60" min="5" max="720" required style="width:100px">
+                    <div class="time-presets">
+                        <button type="button" class="btn-xs" onclick="setEstTime(30)">30m</button>
+                        <button type="button" class="btn-xs" onclick="setEstTime(45)">45m</button>
+                        <button type="button" class="btn-xs" onclick="setEstTime(60)">1h</button>
+                        <button type="button" class="btn-xs" onclick="setEstTime(90)">1.5h</button>
+                        <button type="button" class="btn-xs" onclick="setEstTime(120)">2h</button>
+                    </div>
+                </div>
+            </div>
 
-    await window.utils.apiFetch('/api/tasks/batch-add', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ tasks })
-    });
-    window.utils.closeModal();
-    loadTasks();
+            <div style="display:flex; gap:10px">
+                <button type="submit" class="btn btn-primary" style="flex:1">Add Task</button>
+                <button type="button" class="btn" style="flex:1" onclick="utils.closeModal()">Cancel</button>
+            </div>
+        </form>
+    `;
+    
+    window.setEstTime = (m) => document.querySelector('input[name="estimated_minutes"]').value = m;
+    window.utils.openModal();
+    setTimeout(() => {
+        const input = document.querySelector('input[name="task_name"]');
+        if(input) input.focus();
+    }, 100);
+};
+
+window.handleAddTaskSubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const task = {
+        task_name: fd.get('task_name'),
+        subject: fd.get('subject'),
+        estimated_minutes: parseInt(fd.get('estimated_minutes'))
+    };
+
+    try {
+        await window.utils.apiFetch('/api/tasks/batch-add', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ tasks: [task] })
+        });
+        window.utils.closeModal();
+        loadTasks();
+        window.utils.showToast('Task added successfully');
+    } catch (err) {
+        // handled by apiFetch
+    }
 };
 
 // --- End Day Modal ---
